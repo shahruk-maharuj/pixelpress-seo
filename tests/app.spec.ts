@@ -91,3 +91,43 @@ test("works offline after the first visit", async ({ page, context }) => {
   await expect(page.getByText("Drop images here")).toBeVisible();
   await context.setOffline(false);
 });
+
+/** Engines that only load when a format needs them (see LAZY in sw.js). */
+const LAZY_ENGINES = [
+  "engine/engine-avif_enc-LMBWQXB7.js",
+  "engine/avif_enc.wasm",
+  "engine/engine-libheif-bundle-72LQLQ72.js",
+  "engine/engine-svgo.browser-ZXHO3R3P.js",
+  "engine/engine-gifsicle.min-6YFEKZDP.js",
+];
+
+/** Which of the lazy engines are not in the offline cache yet. */
+const uncachedEngines = (page: Page) =>
+  page.evaluate(async (urls) => {
+    const missing: string[] = [];
+    for (const url of urls) if (!(await caches.match(url))) missing.push(url);
+    return missing;
+  }, LAZY_ENGINES);
+
+test("lazy engines (AVIF, HEIC, SVG, GIF) are cached after the first idle", async ({ page }) => {
+  await page.waitForFunction(async () => !!(await navigator.serviceWorker?.ready), null, { timeout: 15_000 });
+  // Nothing here uses AVIF, HEIC, SVG or GIF, so only the idle precache can fill these in.
+  await expect.poll(() => uncachedEngines(page), { timeout: 30_000 }).toEqual([]);
+});
+
+test("AVIF output works offline even if AVIF was never used online", async ({ page, context }) => {
+  await page.waitForFunction(async () => !!(await navigator.serviceWorker?.ready), null, { timeout: 15_000 });
+  await expect.poll(() => uncachedEngines(page), { timeout: 30_000 }).toEqual([]);
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByText("Drop images here")).toBeVisible();
+  // Wait for the pro engine so AVIF isn't swapped for WebP while it boots.
+  await expect(page.locator("#eng")).toHaveClass(/\bpro\b/, { timeout: 30_000 });
+  await page.selectOption("#q-format", "avif");
+  await addImages(page, [PHOTO]);
+  const [[name, data]] = images(await downloadAll(page));
+  expect(name).toMatch(/\.avif$/);
+  // ....ftypavif magic bytes
+  expect(String.fromCharCode(...data.slice(4, 12))).toBe("ftypavif");
+  await context.setOffline(false);
+});
