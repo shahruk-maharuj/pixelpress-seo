@@ -2127,8 +2127,13 @@ function makeZip(files) {
   return new Blob([...parts, ...central, new Uint8Array(end.buffer)], { type: "application/zip" });
 }
 $("#zip").addEventListener("click", async () => {
-  const btn = $("#zip"); btn.disabled = true; toast("Packing ZIP…");
+  const btn = $("#zip"); btn.disabled = true;
   try {
+    // Never pack while an image is still being compressed or auto-fixed,
+    // or it would be silently left out of the ZIP.
+    const busy = () => items.some(i => i.status === "working" || i.status === "queued");
+    if (busy()) { toast("Finishing images…"); while (busy()) await new Promise(r => setTimeout(r, 150)); }
+    toast("Packing ZIP…");
     const files = [], done = items.filter(i => i.status === "done");
     for (const it of done) {
       const dir = "images/" + (S.keepFolders && it.file._dir ? it.file._dir.split("/").map(p => slugify(p) || p).join("/") + "/" : "");
