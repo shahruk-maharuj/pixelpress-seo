@@ -1,6 +1,6 @@
 // Offline support: cache the app shell and the compression engines.
 // Bump VERSION whenever index.html or engine files change.
-const VERSION = "pixelpress-v1";
+const VERSION = "pixelpress-v2";
 const SHELL = [
   "./",
   "index.html",
