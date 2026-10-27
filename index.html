@@ -2074,6 +2074,12 @@ if (WP) $("#wplib").hidden = false;
 if (!window.claude && !WP && window.top === window && "serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")) {
   const l = document.createElement("link"); l.rel = "manifest"; l.href = "manifest.webmanifest"; document.head.append(l);
   navigator.serviceWorker.register("sw.js").catch(() => {});
+  // Once the page is idle, fetch the AVIF, HEIC, SVG and GIF engines in the background
+  // so they work offline too. Skipped when the browser asks to save data.
+  if (!navigator.connection?.saveData) {
+    const idle = window.requestIdleCallback || ((fn) => setTimeout(fn, 3000));
+    navigator.serviceWorker.ready.then((reg) => idle(() => reg.active?.postMessage("precache-engines"), { timeout: 10000 })).catch(() => {});
+  }
 }
 
 /* ---------- saving ---------- */
