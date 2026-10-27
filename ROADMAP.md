@@ -5,7 +5,7 @@ Work top to bottom. Each item should be one pull request with a test in `tests/`
 ## Reliability
 
 - [ ] **Keep "Download all" disabled while any image is still working.** The ZIP already waits for busy images (see `tests/app.spec.ts`), but the button should also reflect it: call `refreshAll()` whenever an item's status changes, including when auto-fix re-queues an image.
-- [ ] **Self-host the fonts** (Roboto, Roboto Mono, Google Sans Flex) so the app looks right offline and makes no third-party requests.
+- [x] **Self-host the fonts** (Roboto, Roboto Mono, Google Sans Flex) so the app looks right offline and makes no third-party requests.
 - [ ] **Precache the lazy engines** (AVIF, HEIC, SVG, GIF) after first idle, so every format works offline, not just the ones already used.
 - [ ] **Error-state test:** a corrupt image shows a clear error on its row and doesn't block the rest of the batch.
 

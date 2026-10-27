@@ -8,6 +8,8 @@ const ROOT = resolve(import.meta.dirname, "..");
 const PORT = Number(process.env.PORT ?? 4173);
 const TYPES = {
   ".html": "text/html; charset=utf-8",
+  ".css": "text/css; charset=utf-8",
+  ".woff2": "font/woff2",
   ".js": "text/javascript; charset=utf-8",
   ".mjs": "text/javascript; charset=utf-8",
   ".wasm": "application/wasm",
