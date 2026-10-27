@@ -1080,6 +1080,12 @@ async function nativeToSize(src, w, h, mime, flatten, lim) {
   throw new Error("Couldn't reach that size — try a larger target");
 }
 let active = 0, engineSettled = false;
+/* Re-queue one image (per-image quality, auto-fix). refreshAll() keeps the summary and
+   "Download all" in step: the button must stay disabled until this image is done again. */
+function queueAgain(it) {
+  it.job++; it.status = "queued";
+  refreshAll(); pump();
+}
 function pump() {
   const limit = Engine.ready ? Math.max(2, Engine.workers.length + 1) : 3;
   while (active < limit) {
@@ -1456,7 +1462,7 @@ function buildRow(it) {
   $(".a-del", el).addEventListener("click", () => removeItem(it));
   $(".fixbtn", el).addEventListener("click", () => { it.fixed = false; fixItem(it, true).then(n => { if (n && n.includes("needs AI for name/alt")) { toast("Set up AI to write the name and alt text"); openAiSettings(); } else if (n && n.length) toast("Fixing: " + n.join(", ")); }); });
   const qon = $(".f-qon", el), qr = $(".f-q", el), qwrap = qr.parentElement;
-  let qT; const requeue = () => { it.job++; it.status = "queued"; renderRow(it); pump(); };
+  let qT; const requeue = () => queueAgain(it);
   qon.addEventListener("change", () => { qwrap.hidden = !qon.checked; it.qOverride = qon.checked ? +qr.value : null; requeue(); });
   qr.addEventListener("input", () => { qr.nextElementSibling.textContent = qr.value; it.qOverride = +qr.value; clearTimeout(qT); qT = setTimeout(requeue, 300); });
   const ai = $(".ai-btn", el);
@@ -1937,7 +1943,7 @@ async function fixItem(it, manual) {
   }
   if (bad(/^Rights metadata/) && (!S.creator || !S.copyright)) notes.push("add creator & copyright in More settings");
   it.fixed = true; it.fixNotes = notes;
-  if (reencode) { it.job++; it.status = "queued"; renderRow(it); pump(); }
+  if (reencode) queueAgain(it);
   else renderRow(it);
   return notes;
 }

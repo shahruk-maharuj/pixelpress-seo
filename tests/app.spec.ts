@@ -91,3 +91,58 @@ test("works offline after the first visit", async ({ page, context }) => {
   await expect(page.getByText("Drop images here")).toBeVisible();
   await context.setOffline(false);
 });
+
+/**
+ * Samples the page every few milliseconds and records any moment where a row is still
+ * queued or compressing (it shows the "working" bar) while "Download all" is clickable.
+ */
+async function watchDownloadButton(page: Page) {
+  await page.evaluate(() => {
+    const w = window as any;
+    w.__zip = { violations: [] as string[], sawBusy: false, sawFixing: false };
+    setInterval(() => {
+      const zip = document.querySelector<HTMLButtonElement>("#zip")!;
+      const busy = document.querySelectorAll("#list .row.working");
+      if ([...document.querySelectorAll("#list .aitag")].some((t) => /Fixing/.test(t.textContent || ""))) w.__zip.sawFixing = true;
+      if (!busy.length) return;
+      w.__zip.sawBusy = true;
+      if (!zip.disabled) w.__zip.violations.push(`${busy.length} busy at ${Math.round(performance.now())} ms`);
+    }, 5);
+  });
+}
+
+const zipWatch = (page: Page) =>
+  page.evaluate(() => (window as any).__zip as { violations: string[]; sawBusy: boolean; sawFixing: boolean });
+
+/** Waits until no row is queued or compressing. */
+const allSettled = (page: Page) =>
+  page.waitForFunction(() => document.querySelectorAll("#list .row").length > 0 && !document.querySelector("#list .row.working"), null, { timeout: 45_000 });
+
+test("Download all stays disabled while auto-fix re-encodes an image", async ({ page }) => {
+  // A JPEG kept in its original format scores low on "Modern format",
+  // so auto-fix (on by default) re-queues it as WebP right after it finishes.
+  await page.selectOption("#q-format", "keep");
+  await watchDownloadButton(page);
+  await page.setInputFiles("#file", [PHOTO]);
+  await page.waitForFunction(() => (window as any).__zip.sawFixing, null, { timeout: 45_000 });
+  await allSettled(page);
+  await expect(page.locator("#zip")).toBeEnabled();
+  expect((await zipWatch(page)).violations).toEqual([]);
+});
+
+test("Download all is disabled while a single image is re-optimized", async ({ page }) => {
+  await addImages(page, [PHOTO]);
+  await allSettled(page);
+  await watchDownloadButton(page);
+  // Give the image its own quality: only that row is re-queued, not the whole batch.
+  await page.locator("#list .row .f-qon").first().evaluate((box: HTMLInputElement) => {
+    box.checked = true;
+    box.dispatchEvent(new Event("change"));
+  });
+  await expect(page.locator("#zip")).toBeDisabled();
+  await allSettled(page);
+  await expect(page.locator("#zip")).toBeEnabled();
+  const watch = await zipWatch(page);
+  expect(watch.sawBusy).toBe(true);
+  expect(watch.violations).toEqual([]);
+});
