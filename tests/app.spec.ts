@@ -91,3 +91,36 @@ test("works offline after the first visit", async ({ page, context }) => {
   await expect(page.getByText("Drop images here")).toBeVisible();
   await context.setOffline(false);
 });
+
+/** The faces the UI uses, as `font` shorthands for document.fonts.check(). */
+const UI_FONTS = ['400 16px "Google Sans Flex"', '500 16px "Google Sans Flex"', '400 16px Roboto', '500 16px Roboto', '700 16px Roboto', '400 16px "Roboto Mono"', '500 16px "Roboto Mono"'];
+
+/** Loads every UI face and reports which ones are not available. */
+const missingFonts = (page: Page) =>
+  page.evaluate(async (fonts) => {
+    await Promise.all(fonts.map((f) => document.fonts.load(f).catch(() => [])));
+    const loaded = new Set([...document.fonts].filter((ff) => ff.status === "loaded").map((ff) => `${ff.weight} ${ff.family.replace(/["']/g, "")}`));
+    return fonts.filter((f) => !loaded.has(f.replace(/ 16px /, " ").replace(/"/g, "")));
+  }, UI_FONTS);
+
+test("fonts are self-hosted: no third-party requests, every UI face loads", async ({ page }) => {
+  const thirdParty: string[] = [];
+  page.on("request", (r) => {
+    const host = new URL(r.url()).hostname;
+    if (r.url().startsWith("http") && host !== "localhost") thirdParty.push(r.url());
+  });
+  await page.reload();
+  await expect(page.getByText("Drop images here")).toBeVisible();
+  expect(await missingFonts(page)).toEqual([]);
+  expect(thirdParty.filter((u) => /fonts\.(googleapis|gstatic)\.com/.test(u))).toEqual([]);
+});
+
+test("fonts still load offline after the first visit", async ({ page, context }) => {
+  await page.waitForFunction(async () => !!(await navigator.serviceWorker?.ready), null, { timeout: 15_000 });
+  await page.reload(); // let the service worker take control
+  await context.setOffline(true);
+  await page.reload();
+  await expect(page.getByText("Drop images here")).toBeVisible();
+  expect(await missingFonts(page)).toEqual([]);
+  await context.setOffline(false);
+});

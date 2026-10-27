@@ -14,4 +14,14 @@ The files in `engine/` are compiled builds of the open-source libraries below. E
 | [SVGO](https://github.com/svg/svgo) | SVG optimization | MIT |
 | [Squoosh](https://github.com/GoogleChromeLabs/squoosh) codec wrappers | WebAssembly builds of the codecs above | Apache-2.0 |
 
+## Fonts
+
+The files in `fonts/` are the Latin and Latin Extended subsets of these fonts, taken from [Fontsource](https://fontsource.org) packages. Each license text sits next to the files.
+
+| Font | Weights | License |
+|---|---|---|
+| [Google Sans Flex](https://fonts.google.com/specimen/Google+Sans+Flex) | 400, 500 | SIL Open Font License 1.1 (`fonts/LICENSE-google-sans-flex.txt`) |
+| [Roboto](https://fonts.google.com/specimen/Roboto) | 400, 500, 700 | SIL Open Font License 1.1 (`fonts/LICENSE-roboto.txt`) |
+| [Roboto Mono](https://fonts.google.com/specimen/Roboto+Mono) | 400, 500 | SIL Open Font License 1.1 (`fonts/LICENSE-roboto-mono.txt`) |
+
 If you redistribute this project, include these notices. If you plan to sell or relicense it, check the GPL components (libimagequant, gifsicle) first.

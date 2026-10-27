@@ -1,11 +1,26 @@
 // Offline support: cache the app shell and the compression engines.
-// Bump VERSION whenever index.html or engine files change.
-const VERSION = "pixelpress-v1";
+// Bump VERSION whenever index.html, fonts or engine files change.
+const VERSION = "pixelpress-v3";
 const SHELL = [
   "./",
   "index.html",
   "manifest.webmanifest",
   "icon.svg",
+  "fonts/fonts.css",
+  "fonts/google-sans-flex-latin-400-normal.woff2",
+  "fonts/google-sans-flex-latin-500-normal.woff2",
+  "fonts/google-sans-flex-latin-ext-400-normal.woff2",
+  "fonts/google-sans-flex-latin-ext-500-normal.woff2",
+  "fonts/roboto-latin-400-normal.woff2",
+  "fonts/roboto-latin-500-normal.woff2",
+  "fonts/roboto-latin-700-normal.woff2",
+  "fonts/roboto-latin-ext-400-normal.woff2",
+  "fonts/roboto-latin-ext-500-normal.woff2",
+  "fonts/roboto-latin-ext-700-normal.woff2",
+  "fonts/roboto-mono-latin-400-normal.woff2",
+  "fonts/roboto-mono-latin-500-normal.woff2",
+  "fonts/roboto-mono-latin-ext-400-normal.woff2",
+  "fonts/roboto-mono-latin-ext-500-normal.woff2",
   "engine/engine.js",
   "engine/engine-chunk-TSZOAAQU.js",
   "engine/mozjpeg_enc.wasm",
