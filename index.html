@@ -2409,7 +2409,6 @@ async function loadSamples() {
       seo: { alt: "Calm morning water and pine hills seen from a private dock in Duluth" } },
     { seed: 42, name: "Screenshot 2026-09-12 at 10.14.png", pal: { sky: ["#0F1A33", "#2C3E6B", "#6A5D8C"], sun: [.4, .35], glow: "#E9E6FF", hills: ["#2A3050", "#1B2038", "#0E1224"], water: "#161C33", dock: "#0B0D17" }, seo: {} }
   ];
-  S.keyword = SAMPLE.keyword; S.location = SAMPLE.location; $("#keyword").value = S.keyword; $("#location").value = S.location;
   const files = [], seos = [];
   for (const dfn of defs) {
     const c = paint(dfn.seed, dfn.pal);
@@ -2417,7 +2416,8 @@ async function loadSamples() {
     files.push(new File([b], dfn.name, { type: "image/png" })); seos.push(dfn.seo);
     await tick();
   }
-  if (items.length) return;
+  if (items.length) return; // the user added their own images first
+  S.keyword = SAMPLE.keyword; S.location = SAMPLE.location; $("#keyword").value = S.keyword; $("#location").value = S.location;
   sampleMode = true; $("#samplenote").hidden = false;
   addFiles(files, seos);
 }
